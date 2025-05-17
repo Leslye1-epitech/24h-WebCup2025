@@ -62,7 +62,6 @@ export default function CreatePage() {
         musicLink: ""
     });
 
-    const [showPreview, setShowPreview] = useState(false);
     const [gifSearch, setGifSearch] = useState("");
     const [gifResults, setGifResults] = useState([]);
 
@@ -149,7 +148,6 @@ export default function CreatePage() {
     const handlePublish = () => {
         console.log("Formulaire à publier :", formData);
         alert("Publication simulée ! (à implémenter)");
-        // Ici tu pourrais envoyer les données à une API, ou les stocker localement, etc.
     };
 
 
@@ -351,12 +349,6 @@ export default function CreatePage() {
 
                             <div className="flex justify-end pt-4">
                                 <button
-                                    onClick={() => setShowPreview(!showPreview)}
-                                    className="px-4 py-2 bg-gray-600 text-white rounded-md mr-2"
-                                >
-                                    {showPreview ? "Masquer l'aperçu" : "Voir l'aperçu"}
-                                </button>
-                                <button
                                     onClick={handlePublish}
                                     className="px-4 py-2 bg-red-600 text-white rounded-md"
                                 >
@@ -368,7 +360,7 @@ export default function CreatePage() {
                     </div>
 
                     {/* Aperçu */}
-                    <div className={`${showPreview ? 'block' : 'hidden lg:block'}`}>
+                    <div>
                         <div className="bg-white p-6 rounded-lg shadow-md mb-4">
                             <h2 className="text-xl font-semibold mb-2">Aperçu de votre page</h2>
                             <p className="text-sm text-gray-600">Voici à quoi ressemblera votre page de départ</p>

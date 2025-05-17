@@ -1,5 +1,4 @@
 // components/EndPagePreview.jsx
-
 export default function EndPagePreview({ formData, themes }) {
   const currentTheme = formData.useCustomTheme
     ? {
@@ -110,7 +109,7 @@ export default function EndPagePreview({ formData, themes }) {
 
         <div className="text-center pt-4 border-t border-opacity-30" style={formData.useCustomTheme ? { borderColor: currentTheme.text } : {}}>
           <p className="text-sm opacity-70">
-            Créé avec <span className="font-bold">TheEnd.page</span>
+            Créé par <span className="font-bold">SelPoivre</span>
           </p>
         </div>
       </div>

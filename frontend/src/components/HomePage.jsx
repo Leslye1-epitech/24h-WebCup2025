@@ -1,9 +1,64 @@
 // components/HomePage.jsx
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PenTool } from 'lucide-react';
+import { themes } from './CreatePage';
 
-export default function HomePage({ setPage }) {
+const examplePages = [
+  {
+    id: 1,
+    name: "Thomas D.",
+    reason: "job",
+    theme: "dramatic",
+    date: "15/05/2025",
+    excerpt: "Après 3 ans à tout donner, j'ai décidé de prendre une autre direction..."
+  },
+  {
+    id: 2,
+    name: "Julie M.",
+    reason: "relationship",
+    theme: "ironic",
+    date: "12/05/2025",
+    excerpt: "C'était bien, c'était cool, mais toutes les bonnes choses ont une fin..."
+  },
+  {
+    id: 3,
+    name: "L'équipe Projet X",
+    reason: "project",
+    theme: "professional",
+    date: "08/05/2025",
+    excerpt: "Notre projet s'achève après 18 mois de développement intensif..."
+  },
+  {
+    id: 4,
+    name: "Alexandre B.",
+    reason: "group",
+    theme: "absurd",
+    date: "03/05/2025",
+    excerpt: "Salut le groupe ! C'était fun mais il est temps pour moi de..."
+  }
+];
+
+export default function HomePage() {
+  const navigate = useNavigate();
+  const [topPages, setTopPages] = useState([]);
+
+  useEffect(() => {
+    const storedVotes = JSON.parse(localStorage.getItem('votes') || '{}');
+
+    const sorted = [...examplePages]
+      .map(page => ({
+        ...page,
+        votes: storedVotes[page.id] || 0
+      }))
+      .sort((a, b) => b.votes - a.votes)
+      .slice(0, 3);
+
+    setTopPages(sorted);
+  }, []);
+
   return (
-    <div className="flex-1 bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+    <div className="flex-1 bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen">
       <div className="container mx-auto py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h1 className="text-5xl font-bold mb-6">
@@ -12,7 +67,7 @@ export default function HomePage({ setPage }) {
           <p className="text-2xl mb-8 text-gray-300">
             Parce que si c'est la fin, autant la rendre inoubliable... Et cliquable.
           </p>
-          <div className="space-y-6">
+          <div className="space-y-6 mb-8">
             <p className="text-xl">
               Un collègue claque sa démission ? Un projet part en fumée ? Une fin de couple ?
             </p>
@@ -24,15 +79,36 @@ export default function HomePage({ setPage }) {
               <br />Un dernier mot avant de claquer la porte.
             </p>
           </div>
-          
-          <button 
-            onClick={() => setPage('create')}
-            className="mt-12 px-8 py-4 bg-red-600 hover:bg-red-700 rounded-lg text-xl font-bold flex items-center gap-2 mx-auto"
+          <button
+            onClick={() => navigate('/create')}
+            className="mt-4 px-8 py-4 bg-red-600 hover:bg-red-700 rounded-lg text-xl font-bold flex items-center gap-2 mx-auto"
           >
             <PenTool size={20} />
             Créer ma page de départ
           </button>
         </div>
+
+        {/* Wall of Fame */}
+        {topPages.length > 0 && (
+          <div className="mt-16 max-w-4xl mx-auto">
+            <h2 className="text-3xl font-semibold mb-6 text-center text-yellow-400">🏆 Wall of Fame</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {topPages.map(page => (
+                <div
+                  key={page.id}
+                  onClick={() => navigate(`/view/${page.id}`)}
+                  className="bg-white text-black rounded-lg p-4 shadow-md cursor-pointer hover:shadow-lg transition transform hover:-translate-y-1 hover:scale-105 duration-200"
+                >
+                  <div className={`mb-2 p-1 rounded ${themes[page.theme].bg}`} />
+                  <h3 className="font-bold text-lg mb-1">{page.name}</h3>
+                  <p className="text-xs text-gray-600 mb-2">{page.date}</p>
+                  <p className="text-sm mb-2 line-clamp-3">{page.excerpt}</p>
+                  <p className="text-sm font-semibold text-green-700">👍 {page.votes} votes</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

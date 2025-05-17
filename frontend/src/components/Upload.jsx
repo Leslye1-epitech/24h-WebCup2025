@@ -11,7 +11,7 @@ const ImageUpload = () => {
 
       var parts = filename.split(".");
       const fileType = parts[parts.length - 1];
-      console.log("fileType", fileType); //ex: zip, rar, jpg, svg etc.
+      console.log("fileType", fileType);
 
       setImage(files[0]);
     }
