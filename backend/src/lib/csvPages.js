@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const CSV_PATH = path.join(__dirname, '../data/pages.csv');
-const HEADER_LINE = 'id,creatorName,reasonOfLeaving,themeName,bgColor,textColor,accentColor,creatorMessage,images,gifs,videos,likedBy,createdAt\n';
+const HEADER_LINE = 'id,creatorName,creatorId,reasonOfLeaving,themeName,bgColor,textColor,accentColor,creatorMessage,images,gifs,videos,likedBy,createdAt\n';
 
 // Ensure the file exists and has exactly one header line:
 if (!fs.existsSync(CSV_PATH) || fs.readFileSync(CSV_PATH, 'utf8').trim() === '') {
@@ -17,6 +17,7 @@ const { createObjectCsvWriter } = require('csv-writer');
 const PAGE_HEADER = [
   { id: 'id', title: 'id' },
   { id: 'creatorName', title: 'creatorName' },
+  { id: 'creatorId', title: 'creatorId' },
   { id: 'reasonOfLeaving', title: 'reasonOfLeaving' },
   { id: 'themeName', title: 'themeName' },
   { id: 'bgColor', title: 'bgColor' },
@@ -116,7 +117,6 @@ async function removeLike(pageId, userId) {
   await writeAll(modified);
   return updated;
 }
-
 
 async function ensurePagesHeader() {
   if (!fs.existsSync(CSV_PATH) || fs.statSync(CSV_PATH).size === 0) {

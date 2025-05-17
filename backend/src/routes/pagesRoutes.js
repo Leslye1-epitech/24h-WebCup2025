@@ -15,7 +15,12 @@ function auth(req, res, next) {
     }
     const token = authHeader.split(' ')[1];
     try {
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        let secret;
+        if (!process.env.JWT_SECRET) {
+            secret = 'default-jwt-secret';
+        } else
+            secret = process.env.JWT_SECRET;
+        const payload = jwt.verify(token, secret);
         req.user = payload; // { id, username, ... }
         next();
     } catch (err) {
@@ -24,7 +29,7 @@ function auth(req, res, next) {
 }
 
 // Create a new page
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     const {
         creatorName,
         reasonOfLeaving,
@@ -41,10 +46,11 @@ router.post('/', async (req, res) => {
     if (!creatorName || !reasonOfLeaving || !themeName || !creatorMessage) {
         return res.status(400).json({ error: 'creatorName, reasonOfLeaving, themeName, and creatorMessage are required' });
     }
-
+    const creatorId = req.user.id;
     const newPage = {
         id: uuidv4(),
         creatorName,
+        creatorId,
         reasonOfLeaving,
         themeName,
         bgColor,
