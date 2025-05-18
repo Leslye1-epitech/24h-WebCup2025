@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PenTool } from 'lucide-react';
 import { themes } from './CreatePage';
+import axios from 'axios';
 
 const examplePages = [
   {
@@ -42,6 +43,8 @@ const examplePages = [
 export default function HomePage() {
   const navigate = useNavigate();
   const [topPages, setTopPages] = useState([]);
+  const [famousPages, setFamousPages] = useState([]);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const storedVotes = JSON.parse(localStorage.getItem('votes') || '{}');
@@ -56,6 +59,20 @@ export default function HomePage() {
 
     setTopPages(sorted);
   }, []);
+
+  useEffect(() => {
+    const fetchPage = async () => {
+      try {
+        const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
+        const res = await axios.get(`${baseURL}/api/pages/top-liked/3`);
+        setFamousPages(res.data);
+      } catch (err) {
+        console.error(err);
+        setError(err.response?.data?.error || err.message || 'Erreur lors du chargement');
+      }
+    };
+    fetchPage();
+  }, [famousPages]);
 
   return (
     <div className="flex-1 bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen">
@@ -89,21 +106,21 @@ export default function HomePage() {
         </div>
 
         {/* Wall of Fame */}
-        {topPages.length > 0 && (
+        {famousPages.length > 0 && (
           <div className="mt-16 max-w-4xl mx-auto">
             <h2 className="text-3xl font-semibold mb-6 text-center text-yellow-400">🏆 Wall of Fame</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {topPages.map(page => (
+              {famousPages.map(page => (
                 <div
                   key={page.id}
-                  onClick={() => navigate(`/view/${page.id}`)}
+                  onClick={() => navigate(`/page/${page.id}`)}
                   className="bg-white text-black rounded-lg p-4 shadow-md cursor-pointer hover:shadow-lg transition transform hover:-translate-y-1 hover:scale-105 duration-200"
                 >
-                  <div className={`mb-2 p-1 rounded ${themes[page.theme].bg}`} />
-                  <h3 className="font-bold text-lg mb-1">{page.name}</h3>
-                  <p className="text-xs text-gray-600 mb-2">{page.date}</p>
-                  <p className="text-sm mb-2 line-clamp-3">{page.excerpt}</p>
-                  <p className="text-sm font-semibold text-green-700">👍 {page.votes} votes</p>
+                  <div className={`mb-2 p-1 rounded ${(themes[page.themeName] || { bg: 'bg-gray-300', text: 'text-gray-800' }).bg}`} />
+                  <h3 className="font-bold text-lg mb-1">{page.creatorName}</h3>
+                  <p className="text-xs text-gray-600 mb-2">{page.creatorMessage}</p>
+                  <p className="text-sm mb-2 line-clamp-3">{page.createdAt}</p>
+                  <p className="text-sm font-semibold text-green-700">👍 {page.likes} votes</p>
                 </div>
               ))}
             </div>

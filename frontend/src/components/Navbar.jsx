@@ -19,9 +19,8 @@ export default function Navbar() {
         <div className="flex gap-4">
           <Link
             to="/create"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-              currentPath === '/create' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentPath === '/create' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
+              }`}
           >
             <PenTool size={18} />
             Création
@@ -29,12 +28,20 @@ export default function Navbar() {
 
           <Link
             to="/list"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-              currentPath === '/list' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentPath === '/list' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
+              }`}
           >
             <ListChecks size={18} />
             Liste
+          </Link>
+
+          {/* new Auth link */}
+          <Link
+            to="/auth"
+            className={`px-4 py-2 rounded-lg font-semibold ${currentPath === '/auth' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
+              }`}
+          >
+            Connection / Inscription
           </Link>
         </div>
       </div>

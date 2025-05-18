@@ -1,114 +1,103 @@
-// components/ViewPage.jsx
 import { useParams, Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { themes } from './CreatePage';
 import { Heart } from 'lucide-react';
-
-const examplePages = [
-  {
-    id: 1,
-    name: "Thomas D.",
-    reason: "job",
-    theme: "dramatic",
-    date: "15/05/2025",
-    excerpt: "Après 3 ans à tout donner, j'ai décidé de prendre une autre direction..."
-  },
-  {
-    id: 2,
-    name: "Julie M.",
-    reason: "relationship",
-    theme: "ironic",
-    date: "12/05/2025",
-    excerpt: "C'était bien, c'était cool, mais toutes les bonnes choses ont une fin..."
-  },
-  {
-    id: 3,
-    name: "L'équipe Projet X",
-    reason: "project",
-    theme: "professional",
-    date: "08/05/2025",
-    excerpt: "Notre projet s'achève après 18 mois de développement intensif..."
-  },
-  {
-    id: 4,
-    name: "Alexandre B.",
-    reason: "group",
-    theme: "absurd",
-    date: "03/05/2025",
-    excerpt: "Salut le groupe ! C'était fun mais il est temps pour moi de..."
-  }
-];
+import axios from 'axios';
+import { themes } from './CreatePage';
 
 export default function ViewPage() {
   const { id } = useParams();
-  const pageId = parseInt(id);
-  const page = examplePages.find(p => p.id === pageId);
-  const currentTheme = themes[page?.theme];
-
-  const [votes, setVotes] = useState(0);
-  const [hasVoted, setHasVoted] = useState(false);
+  const [page, setPage] = useState(null);
+  const [error, setError] = useState('');
+  const [hasLiked, setHasLiked] = useState(false);
   const [cooldown, setCooldown] = useState(false);
 
   useEffect(() => {
-    const storedVotes = JSON.parse(localStorage.getItem("votes") || "{}");
-    setVotes(storedVotes[pageId] || 0);
+    const fetchPage = async () => {
+      try {
+        const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
+        const endpoint = `${baseURL}/api/pages`;
+        const res = await axios.get(`${endpoint}/${id}`
+          //   , {
+          //    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          // }
+        );
+        setPage(res.data);
+      } catch (err) {
+        console.error(err);
+        setError(err.response?.data?.error || err.message || 'Erreur lors du chargement');
+      }
+    };
+    fetchPage();
+  }, [id]);
 
-    const storedFlags = JSON.parse(localStorage.getItem("votedFlags") || "{}");
-    setHasVoted(!!storedFlags[pageId]);
-  }, [pageId]);
-
-  const toggleVote = () => {
-    if (cooldown) return;
-
+  const toggleLike = async () => {
+    if (cooldown || !page) return;
     setCooldown(true);
     setTimeout(() => setCooldown(false), 1500);
-
-    const storedVotes = JSON.parse(localStorage.getItem("votes") || "{}");
-    const storedFlags = JSON.parse(localStorage.getItem("votedFlags") || "{}");
-
-    let newVotes = { ...storedVotes };
-    let newFlags = { ...storedFlags };
-
-    if (hasVoted) {
-      newVotes[pageId] = Math.max((newVotes[pageId] || 1) - 1, 0);
-      delete newFlags[pageId];
-      setHasVoted(false);
-    } else {
-      newVotes[pageId] = (newVotes[pageId] || 0) + 1;
-      newFlags[pageId] = true;
-      setHasVoted(true);
+    try {
+      const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
+      const endpoint = hasLiked ? `${baseURL}/api/pages/${id}/unlike` : `${baseURL}/api/pages/${id}/like`;
+      const res = await axios.post(endpoint, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setPage(res.data);
+      setHasLiked(!hasLiked);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.error || err.message || 'Erreur lors de l\'action');
     }
-
-    localStorage.setItem("votes", JSON.stringify(newVotes));
-    localStorage.setItem("votedFlags", JSON.stringify(newFlags));
-    setVotes(newVotes[pageId]);
   };
 
-  if (!page) return <div className="p-4 text-center">Page non trouvée </div>;
+  if (error) return <div className="text-center text-red-500 py-4">{error}</div>;
+  if (!page) return <div className="text-center py-4">Chargement...</div>;
+
+  const themeObj = themes[page.themeName] || { bg: 'bg-gray-300', text: 'text-gray-800' };
+
+  const getMimeType = (url) => {
+    const ext = url.split('.').pop().toLowerCase();
+    if (ext === 'mp4') return 'video/mp4';
+    if (ext === 'webm') return 'video/webm';
+    if (ext === 'ogg') return 'video/ogg';
+    return '';
+  };
 
   return (
-    <div className={`min-h-screen py-10 px-4 ${currentTheme.bg} ${currentTheme.text}`}>
+    <div className={`min-h-screen py-10 px-4 ${themeObj.bg} ${themeObj.text}`}>
       <div className="max-w-2xl mx-auto bg-white text-black p-6 rounded-md shadow-lg relative">
         <div className="flex justify-between items-start mb-2">
-          <h1 className="text-2xl font-bold">{page.name}</h1>
-          <button
-            onClick={toggleVote}
-            title={hasVoted ? 'Annuler le vote' : 'Voter'}
-            disabled={cooldown}
-          >
+          <h1 className="text-2xl font-bold">{page.creatorName}</h1>
+          <button onClick={toggleLike} disabled={cooldown} title={hasLiked ? 'Annuler le like' : 'Aimer'}>
             <Heart
-              className={`w-6 h-6 transition-colors ${hasVoted ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'} ${cooldown ? 'opacity-50 cursor-not-allowed' : ''}`}
-              fill={hasVoted ? 'currentColor' : 'none'}
+              className={`w-6 h-6 transition-colors ${hasLiked ? 'fill-red-500 text-red-500' : 'text-gray-400 hover:text-red-500'} ${cooldown ? 'opacity-50 cursor-not-allowed' : ''}`}
+              fill={hasLiked ? 'currentColor' : 'none'}
             />
           </button>
         </div>
 
-        <p className="italic text-sm text-gray-500 mb-4">{page.date}</p>
-        <p className="mb-4 whitespace-pre-line">{page.excerpt}</p>
+        <p className="italic text-sm text-gray-500 mb-4">{page.createdAt}</p>
+        <p className="mb-4 whitespace-pre-line">{page.creatorMessage}</p>
 
         <div className="mt-4 text-sm text-gray-700 text-right">
-          Nombre de votes : <strong>{votes}</strong>
+          Nombre de likes : <strong>{page.likedBy.length}</strong>
         </div>
+
+        {(page.images.length || page.gifs.length || page.videos.length) > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            {page.images.map((url, i) => (
+              <img key={"img" + i} src={url} alt="image" className="w-full h-auto rounded" />
+            ))}
+            {page.videos.map((url, i) => (
+              <video key={"vid" + i} controls className="w-full h-auto rounded">
+                <source src={url} />
+                Votre navigateur ne supporte pas la lecture de vidéos.
+              </video>
+            ))}
+            {page.gifs.map((url, i) => (
+              <img key={"gif" + i} src={url} alt="gif" className="w-full h-auto rounded" />
+            ))}
+          </div>
+        )}
+
 
         <Link to="/list" className="inline-block mt-6 text-blue-500 underline">
           ← Retour à la liste

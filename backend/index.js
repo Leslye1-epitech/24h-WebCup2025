@@ -1,4 +1,4 @@
-if (typeof(PhusionPassenger) !== 'undefined') {
+if (typeof (PhusionPassenger) !== 'undefined') {
     PhusionPassenger.configure({ autoInstall: false });
 }
 var express = require('express');
@@ -6,8 +6,8 @@ var app = express();
 var pagesRoutes = require('./src/routes/pagesRoutes.js');
 var usersRoutes = require('./src/routes/usersRoutes.js');
 
-const { init: ensureHeader} = require('./src/lib/csvUsers');
-const { init: ensurePagesHeader} = require('./src/lib/csvPages');
+const { init: ensureHeader } = require('./src/lib/csvUsers');
+const { init: ensurePagesHeader } = require('./src/lib/csvPages');
 
 async function initUsersFile() {
     await ensureHeader();
@@ -19,17 +19,27 @@ async function initPagesFile() {
 }
 initPagesFile();
 
-
+const cors = require('cors');
 const { users } = require('./src/lib/csvUsers');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
+const upload = multer({ dest: 'uploads/' }); // store in /uploads
+
 require('dotenv').config();
+// enable CORS for your frontend (adjust origin to your React URL)
+
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
 
 app.use(express.json());
 
 // Register
-app.post('/register', async (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password)
         return res.status(400).json({ error: 'Missing fields' });
@@ -43,7 +53,7 @@ app.post('/register', async (req, res) => {
 });
 
 // Login
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     const allUsers = await users.readAllUsers();
     console.log(allUsers);
@@ -57,11 +67,18 @@ app.post('/login', async (req, res) => {
     res.json({ token });
 });
 
-app.get('/api', function(req, res) {
+app.get('/api', function (req, res) {
     var body = 'Hello World';
     res.setHeader('Content-Type', 'text/plain');
     res.setHeader('Content-Length', body.length);
     res.end(body);
+});
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  console.log(req);
+  console.log(req.file);
+  const fileUrl = `${req.file.filename}`;
+  res.json({ url: fileUrl });
 });
 
 app.use("/api/pages", pagesRoutes);
@@ -70,5 +87,5 @@ app.use("/api/users", usersRoutes);
 if (typeof(PhusionPassenger) !== 'undefined') {
     app.listen('passenger');
 } else {
-    app.listen(3000);
+    app.listen(8000);
 }

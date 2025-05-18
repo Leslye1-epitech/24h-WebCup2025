@@ -1,7 +1,9 @@
 // components/CreatePage.jsx
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { X, Heart, Briefcase, Megaphone, Ghost, Coffee } from 'lucide-react';
 import EndPagePreview from './EndPagePreview';
+import axios from 'axios';
 
 export const themes = {
     dramatic: {
@@ -47,6 +49,8 @@ export const themes = {
 };
 
 export default function CreatePage() {
+    const navigate = useNavigate();
+    const [error, setError] = useState('');
     const [formData, setFormData] = useState({
         name: "",
         reason: "",
@@ -145,11 +149,56 @@ export default function CreatePage() {
         ]
     };
 
-    const handlePublish = () => {
-        console.log("Formulaire à publier :", formData);
-        alert("Publication simulée ! (à implémenter)");
-    };
+    // const uploadFile = async (file) => {
+    //     const formData = new FormData();
+    //     formData.append("file", file);
+    //     const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
+    //     const res = await axios.post(`${baseURL}/api/upload`, formData);
+    //     return res.data.url;
+    // };
 
+    const handlePublish = async () => {
+        // alert("Publication simulée ! (à implémenter)");
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setError('Il faut être connecté pour publier :)');
+            }
+            const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
+            const endpoint = `${baseURL}/api/pages`;
+            const images = formData.media
+                .filter(item => item.type === 'image')
+                .map(item => item.url);
+            const videos = formData.media
+                .filter(item => item.type === 'video')
+                .map(item => item.url);
+            const gifs = formData.media
+                .filter(item => item.type === 'gif')
+                .map(item => item.url);
+            const payload = {
+                creatorName: formData.name,
+                reasonOfLeaving: formData.reason,
+                themeName: formData.theme,
+                bgColor: formData.customTheme.bgColor,
+                textColor: formData.customTheme.textColor,
+                accentColor: formData.customTheme.accentColor,
+                useCustomTheme: false,
+                creatorMessage: formData.message,
+                images: images,
+                gifs: gifs,
+                videos: formData.musicLink
+            }
+            await axios.post(endpoint, payload, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            navigate('/list');
+        } catch (err) {
+            setError(err.response?.data?.error || err.message || 'Erreur');
+        }
+    };
 
     return (
         <div className="flex-1 bg-gray-100">

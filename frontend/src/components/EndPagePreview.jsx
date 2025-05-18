@@ -2,10 +2,10 @@
 export default function EndPagePreview({ formData, themes }) {
   const currentTheme = formData.useCustomTheme
     ? {
-        bg: formData.customTheme.bgColor,
-        text: formData.customTheme.textColor,
-        accent: formData.customTheme.accentColor
-      }
+      bg: formData.customTheme.bgColor,
+      text: formData.customTheme.textColor,
+      accent: formData.customTheme.accentColor
+    }
     : themes[formData.theme];
 
   const getReasonText = () => {
