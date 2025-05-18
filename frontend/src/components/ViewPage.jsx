@@ -15,12 +15,7 @@ export default function ViewPage() {
     const fetchPage = async () => {
       try {
         const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
-        const endpoint = `${baseURL}/api/pages`;
-        const res = await axios.get(`${endpoint}/${id}`
-          //   , {
-          //    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          // }
-        );
+        const res = await axios.get(`${baseURL}/api/pages/${id}`);
         setPage(res.data);
       } catch (err) {
         console.error(err);
@@ -48,18 +43,100 @@ export default function ViewPage() {
     }
   };
 
+  const renderMusicEmbed = (url) => {
+    try {
+      if (!url) return null;
+
+      // YouTube
+      if (url.includes('youtube.com/watch?v=')) {
+        const id = url.split('v=')[1].split('&')[0];
+        return (
+          <iframe
+            src={`https://www.youtube.com/embed/${id}`}
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            className="w-full h-60 rounded-md"
+          />
+        );
+      }
+
+      // Vimeo
+      if (url.includes('vimeo.com/')) {
+        const id = url.split('/').pop();
+        return (
+          <iframe
+            src={`https://player.vimeo.com/video/${id}`}
+            frameBorder="0"
+            allow="autoplay; fullscreen"
+            allowFullScreen
+            className="w-full h-60 rounded-md"
+          />
+        );
+      }
+
+      // Spotify
+      if (url.includes('open.spotify.com/track/')) {
+        const id = url.split('/track/')[1].split('?')[0];
+        return (
+          <iframe
+            src={`https://open.spotify.com/embed/track/${id}`}
+            width="100%"
+            height="80"
+            frameBorder="0"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            className="rounded-md"
+          />
+        );
+      }
+
+      // Deezer
+      if (url.includes('deezer.com/track/')) {
+        const id = url.split('/track/')[1].split('?')[0];
+        return (
+          <iframe
+            title="Deezer Player"
+            scrolling="no"
+            frameBorder="0"
+            allowTransparency="true"
+            src={`https://widget.deezer.com/widget/dark/track/${id}`}
+            width="100%"
+            height="80"
+            className="rounded-md"
+          />
+        );
+      }
+
+      // SoundCloud
+      if (url.includes('soundcloud.com/')) {
+        return (
+          <iframe
+            width="100%"
+            height="166"
+            scrolling="no"
+            frameBorder="no"
+            allow="autoplay"
+            src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23ff5500&inverse=false&auto_play=false&show_user=true`}
+            className="rounded-md"
+          />
+        );
+      }
+
+      // Autre lien
+      return (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+          🎵 Écouter la musique
+        </a>
+      );
+    } catch (err) {
+      return <p className="text-sm text-red-500">Lien musical invalide</p>;
+    }
+  };
+
   if (error) return <div className="text-center text-red-500 py-4">{error}</div>;
   if (!page) return <div className="text-center py-4">Chargement...</div>;
 
   const themeObj = themes[page.themeName] || { bg: 'bg-gray-300', text: 'text-gray-800' };
-
-  const getMimeType = (url) => {
-    const ext = url.split('.').pop().toLowerCase();
-    if (ext === 'mp4') return 'video/mp4';
-    if (ext === 'webm') return 'video/webm';
-    if (ext === 'ogg') return 'video/ogg';
-    return '';
-  };
 
   return (
     <div className={`min-h-screen py-10 px-4 ${themeObj.bg} ${themeObj.text}`}>
@@ -74,12 +151,8 @@ export default function ViewPage() {
           </button>
         </div>
 
-        <p className="italic text-sm text-gray-500 mb-4">{page.createdAt}</p>
+        <p className="italic text-sm text-gray-500 mb-4">{new Date(page.createdAt).toLocaleString()}</p>
         <p className="mb-4 whitespace-pre-line">{page.creatorMessage}</p>
-
-        <div className="mt-4 text-sm text-gray-700 text-right">
-          Nombre de likes : <strong>{page.likedBy.length}</strong>
-        </div>
 
         {(page.images.length || page.gifs.length || page.videos.length) > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -88,7 +161,7 @@ export default function ViewPage() {
             ))}
             {page.videos.map((url, i) => (
               <video key={"vid" + i} controls className="w-full h-auto rounded">
-                <source src={url} />
+                <source src={url} type="video/mp4" />
                 Votre navigateur ne supporte pas la lecture de vidéos.
               </video>
             ))}
@@ -98,6 +171,14 @@ export default function ViewPage() {
           </div>
         )}
 
+        {/* Lecture musicale */}
+        {page.videos && typeof page.videos === 'string' && page.videos.length > 5 && (
+          <div className="mt-6">{renderMusicEmbed(page.videos)}</div>
+        )}
+
+        <div className="mt-4 text-sm text-gray-700 text-right">
+          Nombre de likes : <strong>{page.likedBy.length}</strong>
+        </div>
 
         <Link to="/list" className="inline-block mt-6 text-blue-500 underline">
           ← Retour à la liste

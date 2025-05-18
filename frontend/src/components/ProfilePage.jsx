@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { themes } from './CreatePage';
+import { Trash, Heart } from 'lucide-react';
 import axios from 'axios';
 
 export default function ProfilePage() {
@@ -28,6 +29,24 @@ export default function ProfilePage() {
         fetchUserPages();
     }, []);
 
+    const handleDelete = async (id) => {
+        const confirm = window.confirm("Supprimer cette page ? C’est irréversible.");
+        if (!confirm) return;
+
+        try {
+            const token = localStorage.getItem('token');
+            const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
+            await axios.delete(`${baseURL}/api/pages/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setUserPages(prev => prev.filter(page => page.id !== id));
+        } catch (err) {
+            console.error(err);
+            setError(err.response?.data?.error || err.message || "Erreur lors de la suppression.");
+        }
+    };
+
+
     return (
         <div className="flex-1 bg-gradient-to-br from-gray-900 to-gray-800 text-white min-h-screen">
             <div className="container mx-auto py-16 px-4">
@@ -46,7 +65,7 @@ export default function ProfilePage() {
 
                 {userPages.length === 0 && !error && (
                     <div className="text-center text-gray-300">
-                        Aucune page créée pour le moment. 😢
+                        Aucune page créée pour le moment.
                     </div>
                 )}
 
@@ -54,7 +73,6 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
                         {userPages.map(page => {
                             const theme = themes[page.themeName] || { bg: 'bg-gray-300', text: 'text-gray-800' };
-                            const date = new Date(page.createdAt).toLocaleDateString('fr-FR');
                             return (
                                 <div
                                     key={page.id}
@@ -63,9 +81,24 @@ export default function ProfilePage() {
                                 >
                                     <div className={`mb-2 p-1 rounded ${theme.bg}`} />
                                     <h3 className="font-bold text-lg mb-1">{page.creatorName}</h3>
-                                    <p className="text-xs text-gray-600 mb-2">{date}</p>
+                                    <p className="text-xs text-gray-600 mb-2">{page.createdAt}</p>
                                     <p className="text-sm mb-2 line-clamp-3">{page.creatorMessage}</p>
-                                    <p className="text-sm font-semibold text-green-700">👍 {page.likedBy?.length || 0} likes</p>
+                                    <div className="flex items-center justify-between text-sm text-gray-700 mt-2">
+                                        <span className="flex items-center gap-1 text-red-600 font-semibold">
+                                            <Heart className="w-4 h-4 fill-red-600" />
+                                            {page.likedBy?.length || 0}
+                                        </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(page.id);
+                                            }}
+                                            title="Supprimer cette page"
+                                            className="text-red-500 hover:text-red-700"
+                                        >
+                                            <Trash size={16} />
+                                        </button>
+                                    </div>
                                 </div>
                             );
                         })}

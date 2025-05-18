@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { X, Heart, Briefcase, Megaphone, Ghost, Coffee } from 'lucide-react';
 import EndPagePreview from './EndPagePreview';
 import axios from 'axios';
+import { AlertCircle } from 'lucide-react';
 
 export const themes = {
     dramatic: {
@@ -54,6 +55,7 @@ export default function CreatePage() {
     const [formData, setFormData] = useState({
         name: "",
         reason: "",
+        customReason: "",
         theme: "dramatic",
         customTheme: {
             bgColor: "#000000",
@@ -157,15 +159,25 @@ export default function CreatePage() {
     //     return res.data.url;
     // };
 
+    const [isPublishing, setIsPublishing] = useState(false);
+
     const handlePublish = async () => {
-        // alert("Publication simulée ! (à implémenter)");
+        if (isPublishing) return;
+
+        setIsPublishing(true);
+        setError('');
+
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                setError('Il faut être connecté pour publier :)');
+                setError('Veuillez vous connecter pour pouvoir publier.');
+                setIsPublishing(false);
+                return;
             }
+
             const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
             const endpoint = `${baseURL}/api/pages`;
+
             const images = formData.media
                 .filter(item => item.type === 'image')
                 .map(item => item.url);
@@ -175,30 +187,41 @@ export default function CreatePage() {
             const gifs = formData.media
                 .filter(item => item.type === 'gif')
                 .map(item => item.url);
+
             const payload = {
-                creatorName: formData.name,
-                reasonOfLeaving: formData.reason,
+                creatorName: formData.name.trim() || "Anonyme",
+                reasonOfLeaving: formData.reason === "other"
+                    ? formData.customReason.trim() || "Autre"
+                    : formData.reason,
                 themeName: formData.theme,
                 bgColor: formData.customTheme.bgColor,
                 textColor: formData.customTheme.textColor,
                 accentColor: formData.customTheme.accentColor,
-                useCustomTheme: false,
+                useCustomTheme: formData.useCustomTheme,
                 creatorMessage: formData.message,
-                images: images,
-                gifs: gifs,
-                videos: formData.musicLink
-            }
+                images,
+                gifs,
+                videos,
+                musicLink: formData.musicLink
+            };
+
             await axios.post(endpoint, payload, {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 }
             });
-            navigate('/list');
+
+            setTimeout(() => {
+                setIsPublishing(false);
+                navigate('/list');
+            }, 3000);
         } catch (err) {
             setError(err.response?.data?.error || err.message || 'Erreur');
+            setIsPublishing(false);
         }
     };
+
 
     return (
         <div className="flex-1 bg-gray-100">
@@ -238,6 +261,19 @@ export default function CreatePage() {
                                     <option value="group">Quitter un groupe</option>
                                     <option value="other">Autre</option>
                                 </select>
+                                {formData.reason === "other" && (
+                                    <div className="mt-3">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Précisez la raison</label>
+                                    <input
+                                      type="text"
+                                      name="customReason"
+                                      value={formData.customReason}
+                                      onChange={handleChange}
+                                      className="w-full p-2 border border-blue-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Ex: départ pour un tour du monde 🌍"
+                                    />
+                                    </div>
+                                )}
                             </div>
 
                             <div>
@@ -399,12 +435,21 @@ export default function CreatePage() {
                             <div className="flex justify-end pt-4">
                                 <button
                                     onClick={handlePublish}
-                                    className="px-4 py-2 bg-red-600 text-white rounded-md"
+                                    disabled={isPublishing}
+                                    className={`px-4 py-2 rounded-md text-white ${isPublishing ? 'bg-gray-400 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700'}`}
                                 >
-                                    Publier
+                                    {isPublishing ? "Publication..." : "Publier"}
                                 </button>
-
                             </div>
+                            {error && (
+                                <div className="mt-4 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-md flex items-start gap-2" role="alert">
+                                    <AlertCircle className="w-5 h-5 mt-0.5 text-red-600" />
+                                    <div>
+                                        <strong className="block font-semibold">Erreur :</strong>
+                                        <span>{error}</span>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

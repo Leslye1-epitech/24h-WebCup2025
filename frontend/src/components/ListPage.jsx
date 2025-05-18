@@ -44,6 +44,7 @@ export default function ListPage() {
 
     const [pages, setPages] = useState([]);
     const [error, setError] = useState('');
+    const [famousPages, setFamousPages] = useState([]);
 
     useEffect(() => {
         const fetchPages = async () => {
@@ -72,6 +73,19 @@ export default function ListPage() {
         fetchPages();
     }, []);
 
+    useEffect(() => {
+        const fetchPage = async () => {
+            try {
+                const baseURL = process.env.REACT_APP_BASE_BACKEND_URL;
+                const res = await axios.get(`${baseURL}/api/pages/top-liked/3`);
+                setFamousPages(res.data);
+            } catch (err) {
+                console.error(err);
+                setError(err.response?.data?.error || err.message || 'Erreur lors du chargement');
+            }
+        };
+        fetchPage();
+    }, [famousPages]);
 
     const getReasonText = (reason) => {
         switch (reason) {
@@ -100,7 +114,31 @@ export default function ListPage() {
         <div className="flex-1 bg-gray-100">
             <div className="container mx-auto py-8 px-4">
                 <h1 className="text-3xl font-bold mb-8 text-center">Dernières pages de départ</h1>
-
+                {/* Wall of Fame */}
+                {famousPages.length > 0 && (
+                    <div className="mt-16 mb-20 max-w-4xl mx-auto">
+                        <h2 className="text-3xl font-semibold mb-6 text-center text-yellow-400">🏆 Hall of Fame</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            {famousPages.map(page => (
+                                <div
+                                    key={page.id}
+                                    onClick={() => navigate(`/page/${page.id}`)}
+                                    className="bg-white text-black rounded-lg p-4 shadow-md cursor-pointer hover:shadow-lg transition transform hover:-translate-y-1 hover:scale-105 duration-200"
+                                >
+                                    <div className={`mb-2 p-1 rounded ${(themes[page.themeName] || { bg: 'bg-gray-300', text: 'text-gray-800' }).bg}`} />
+                                    <h3 className="font-bold text-lg mb-1">{page.creatorName}</h3>
+                                    <p className="text-xs text-gray-600 mb-2">{page.creatorMessage}</p>
+                                    <p className="text-sm mb-2 line-clamp-3">{page.createdAt}</p>
+                                    <div className="flex items-center gap-1 text-sm text-red-600 font-semibold">
+                                        <Heart className="w-4 h-4 fill-red-600" />
+                                        {page.likes}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+                <hr className="my-12 border-gray-300" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {pages.map(page => (
                         <div key={page.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
