@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User } from 'lucide-react';
 import axios from 'axios';
+import { AuthContext } from '../contexts/AuthContext';
 
 export default function AuthPage() {
   const [isRegister, setIsRegister] = useState(false);
   const [formData, setFormData] = useState({ username: '', password: '', email: '' });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -23,7 +25,7 @@ export default function AuthPage() {
     try {
       const res = await axios.post(endpoint, payload);
       if (!isRegister) {
-        localStorage.setItem('token', res.data.token);
+        login(res.data.token);
       }
       navigate('/');
     } catch (err) {

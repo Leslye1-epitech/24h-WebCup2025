@@ -11,7 +11,7 @@ const router = express.Router();
 function auth(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Missing or invalid Authorization header' });
+        return res.status(401).json({ error: 'Authorization header invalide ou manquant' });
     }
     const token = authHeader.split(' ')[1];
     try {
@@ -24,7 +24,7 @@ function auth(req, res, next) {
         req.user = payload; // { id, username, ... }
         next();
     } catch (err) {
-        return res.status(401).json({ error: 'Invalid token' });
+        return res.status(401).json({ error: 'Token invalide' });
     }
 }
 
@@ -43,10 +43,15 @@ router.post('/', auth, async (req, res) => {
         videos = []
     } = req.body;
 
-    if (!creatorName || !reasonOfLeaving || !themeName || !creatorMessage) {
-        return res.status(400).json({ error: 'creatorName, reasonOfLeaving, themeName, and creatorMessage are required' });
-    }
-    const creatorId = req.user.id;
+    if (!creatorName)
+        return res.status(400).json({ error: 'Votre nom est requis !' });
+    if (!reasonOfLeaving)
+        return res.status(400).json({ error: 'Il nous faut une raison de votre départ !' });
+    if(!themeName)
+        return res.status(400).json({ error: 'C\'est quoi le thème ?' });
+    if (!creatorMessage)
+        return res.status(400).json({ error: 'Quel est votre message ?' });
+        const creatorId = req.user.id;
     const date = new Date().toLocaleString('fr-FR', {
         day: '2-digit', month: '2-digit', year: 'numeric',
         hour: '2-digit', minute: '2-digit'
@@ -73,7 +78,7 @@ router.post('/', auth, async (req, res) => {
         res.status(201).json(newPage);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to save page' });
+        res.status(500).json({ error: 'Erreur dans la publication.' });
     }
 });
 
@@ -84,7 +89,7 @@ router.get('/', async (_req, res) => {
         res.json(pages);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to read pages' });
+        res.status(500).json({ error: 'Erreur dans la recherche des pages' });
     }
 });
 
@@ -93,7 +98,7 @@ router.get('/top-liked/:number', async (req, res) => {
     try {
         const limit = parseInt(req.params.number, 10);
         if (isNaN(limit) || limit < 1) {
-            return res.status(400).json({ error: 'Invalid number parameter' });
+            return res.status(400).json({ error: `Paramètre ${limit} invalid` });
         }
 
         const pages = await readAll();
@@ -106,7 +111,7 @@ router.get('/top-liked/:number', async (req, res) => {
         res.json(top);
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Failed to read pages' });
+        res.status(500).json({ error: 'Erreur dans la recherche des pages' });
     }
 });
 
@@ -164,7 +169,7 @@ router.post('/:id/like', auth, async (req, res) => {
     try {
         const userId = req.user.id;
         const updated = await addLike(req.params.id, userId);
-        if (!updated) return res.status(404).json({ error: 'Page not found or already liked' });
+        if (!updated) return res.status(404).json({ error: 'Page inexistante ou déjà aimée' });
         res.json(updated);
     } catch (err) {
         console.error(err);
@@ -177,7 +182,7 @@ router.post('/:id/unlike', auth, async (req, res) => {
     try {
         const userId = req.user.id;
         const updated = await removeLike(req.params.id, userId);
-        if (!updated) return res.status(404).json({ error: 'Page not found or no like to remove' });
+        if (!updated) return res.status(404).json({ error: 'Page inexistante ou déjà pas aimée' });
         res.json(updated);
     } catch (err) {
         console.error(err);

@@ -1,10 +1,18 @@
-// components/Navbar.jsx
-import { PenTool, ListChecks } from 'lucide-react';
+import { PenTool, ListChecks, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
 
 export default function Navbar() {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { user, logout } = useContext(AuthContext);
+
+  const userLink = currentPath === '/profile' ? '/auth' : '/profile';
+
+  const handleUserClick = () => {
+    if (currentPath === '/profile') logout();
+  };
 
   return (
     <div className="bg-gray-900 text-white p-4 shadow-md">
@@ -16,11 +24,10 @@ export default function Navbar() {
           <span>page</span>
         </Link>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           <Link
             to="/create"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentPath === '/create' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentPath === '/create' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'}`}
           >
             <PenTool size={18} />
             Création
@@ -28,21 +35,30 @@ export default function Navbar() {
 
           <Link
             to="/list"
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentPath === '/list' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
-              }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg ${currentPath === '/list' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'}`}
           >
             <ListChecks size={18} />
             Liste
           </Link>
 
-          {/* new Auth link */}
-          <Link
-            to="/auth"
-            className={`px-4 py-2 rounded-lg font-semibold ${currentPath === '/auth' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'
-              }`}
-          >
-            Connection / Inscription
-          </Link>
+          {user ? (
+            <Link
+              to={userLink}
+              onClick={handleUserClick}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold ${currentPath === '/profile' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+            >
+              <User size={18} />
+              {currentPath === '/profile' ? 'Déconnexion' : user.username}
+            </Link>
+          ) : (
+            <Link
+              to="/auth"
+              onClick={handleUserClick}
+              className={`px-4 py-2 rounded-lg font-semibold ${currentPath === '/auth' ? 'bg-red-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+            >
+              Connexion / Inscription
+            </Link>
+          )}
         </div>
       </div>
     </div>

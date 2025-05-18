@@ -41,11 +41,13 @@ app.use(express.json());
 // Register
 app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
-    if (!username || !password)
-        return res.status(400).json({ error: 'Missing fields' });
+    if (!username)
+        return res.status(400).json({ error: 'Un nom d\'utilisateur est requis' });
+    if (!password)
+        return res.status(400).json({ error: 'Un mot de passe est requis' });
     const allUsers = await users.readAllUsers();
     if (allUsers.find(u => u.username === username))
-        return res.status(409).json({ error: 'Username exists' });
+        return res.status(409).json({ error: 'L\'utilisateur exite déjà' });
     const hash = await bcrypt.hash(password, 10);
     const newUser = { id: uuidv4(), username, password: hash, createdAt: new Date().toISOString() };
     await users.userWriter.writeRecords([newUser]);
@@ -59,10 +61,10 @@ app.post('/api/login', async (req, res) => {
     console.log(allUsers);
     const user = allUsers.find(u => u.username === username);
     if (!user)
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Utilisateur ou mot de passe incorrect' });
     const match = await bcrypt.compare(password, user.password);
     if (!match)
-        return res.status(401).json({ error: 'Invalid credentials' });
+        return res.status(401).json({ error: 'Utilisateur ou mot de passe incorrect' });
     const token = jwt.sign({ id: user.id, username }, process.env.JWT_SECRET || 'default-jwt-secret', { expiresIn: '1h' });
     res.json({ token });
 });
@@ -75,16 +77,16 @@ app.get('/api', function (req, res) {
 });
 
 app.post('/api/upload', upload.single('file'), (req, res) => {
-  console.log(req);
-  console.log(req.file);
-  const fileUrl = `${req.file.filename}`;
-  res.json({ url: fileUrl });
+    console.log(req);
+    console.log(req.file);
+    const fileUrl = `${req.file.filename}`;
+    res.json({ url: fileUrl });
 });
 
 app.use("/api/pages", pagesRoutes);
 app.use("/api/users", usersRoutes);
 
-if (typeof(PhusionPassenger) !== 'undefined') {
+if (typeof (PhusionPassenger) !== 'undefined') {
     app.listen('passenger');
 } else {
     app.listen(8000);

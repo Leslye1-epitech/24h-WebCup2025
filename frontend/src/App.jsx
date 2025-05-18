@@ -6,6 +6,7 @@ import CreatePage from './components/CreatePage';
 import ListPage from './components/ListPage';
 import ViewPage from './components/ViewPage'; // à créer
 import AuthPage from './components/AuthPage';
+import ProfilePage from './components/ProfilePage';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/list" element={<ListPage />} />
         <Route path="/page/:id" element={<ViewPage />} />
         <Route path="/auth" element={<AuthPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </div>
   );
